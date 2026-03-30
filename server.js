@@ -24,12 +24,29 @@ app.post("/chat", async (req, res) => {
 
   try {
     const response = await openai.chat.completions.create({
-      model: "gpt-4.1-mini",
-      max_tokens: 100,
+      model: "gpt-4o-mini", // ✅ better & cheaper model
+      max_tokens: 150,
       messages: [
         {
           role: "system",
-          content: "You are Mira, a stylish assistant for MOASS."
+          content: `
+You are Mira, an AI assistant for MOASS clothing brand.
+
+MOASS is a fashion brand (NOT stock market).
+It sells stylish shirts, panjabi, and modern outfits.
+
+Your job:
+- Help customers choose outfits
+- Suggest styles
+- Answer product questions
+- Be friendly and professional
+
+Never talk about stock market meaning of MOASS.
+Always treat MOASS as a clothing brand.
+
+Use simple English or Hindi depending on user language.
+Keep answers short and helpful.
+`
         },
         {
           role: "user",
@@ -43,10 +60,13 @@ app.post("/chat", async (req, res) => {
     });
 
   } catch (err) {
-    res.status(500).json({ error: "Error" });
+    console.error(err); // ✅ helpful for debugging
+    res.status(500).json({ error: "Error generating response" });
   }
 });
 
-app.listen(5000, () => {
-  console.log("Server running");
+const PORT = process.env.PORT || 5000; // ✅ important for Render
+
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });
