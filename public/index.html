@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Mira Chatbot</title>
+</head>
+<body>
+
+<h2>Mira • MOASS Chatbot</h2>
+
+<div id="chat-box"></div>
+
+<input id="input" placeholder="Type your message..." />
+<button onclick="send()">Send</button>
+
+<script>
+async function send() {
+  const input = document.getElementById("input");
+  const message = input.value;
+
+  const res = await fetch("/chat", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ message })
+  });
+
+  const data = await res.json();
+
+  document.getElementById("chat-box").innerHTML += `
+    <p><b>You:</b> ${message}</p>
+    <p><b>Mira:</b> ${data.reply}</p>
+  `;
+
+  input.value = "";
+}
+</script>
+
+</body>
+</html>
