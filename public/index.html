@@ -2,20 +2,122 @@
 <html>
 <head>
   <title>Mira Chatbot</title>
+  <style>
+    body {
+      font-family: Arial;
+    }
+
+    /* Chat Button */
+    #chat-button {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: black;
+      color: white;
+      padding: 12px 18px;
+      border-radius: 25px;
+      cursor: pointer;
+      font-weight: bold;
+      z-index: 1000;
+    }
+
+    /* Chat Box */
+    #chat-container {
+      position: fixed;
+      bottom: 80px;
+      right: 20px;
+      width: 300px;
+      height: 400px;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.2);
+      display: none;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* Header */
+    #chat-header {
+      background: black;
+      color: white;
+      padding: 10px;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    #close-btn {
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    /* Messages */
+    #chat-box {
+      flex: 1;
+      padding: 10px;
+      overflow-y: auto;
+      font-size: 14px;
+    }
+
+    /* Input */
+    #chat-input {
+      display: flex;
+      border-top: 1px solid #ddd;
+    }
+
+    #chat-input input {
+      flex: 1;
+      border: none;
+      padding: 10px;
+      outline: none;
+    }
+
+    #chat-input button {
+      background: black;
+      color: white;
+      border: none;
+      padding: 10px;
+      cursor: pointer;
+    }
+  </style>
 </head>
+
 <body>
 
-<h2>Mira • MOASS Chatbot</h2>
+<!-- Chat Button -->
+<div id="chat-button" onclick="toggleChat()">Live Chat</div>
 
-<div id="chat-box"></div>
+<!-- Chat Container -->
+<div id="chat-container">
+  <div id="chat-header">
+    <span>Mira</span>
+    <span id="close-btn" onclick="toggleChat()">✖</span>
+  </div>
 
-<input id="input" placeholder="Type your message..." />
-<button onclick="send()">Send</button>
+  <div id="chat-box"></div>
+
+  <div id="chat-input">
+    <input id="input" placeholder="Type your message..." />
+    <button onclick="send()">Send</button>
+  </div>
+</div>
 
 <script>
+function toggleChat() {
+  const chat = document.getElementById("chat-container");
+  chat.style.display = chat.style.display === "flex" ? "none" : "flex";
+}
+
 async function send() {
   const input = document.getElementById("input");
   const message = input.value;
+
+  if (!message) return;
+
+  const chatBox = document.getElementById("chat-box");
+
+  chatBox.innerHTML += "<div><b>You:</b> " + message + "</div>";
+
+  input.value = "";
 
   const res = await fetch("/chat", {
     method: "POST",
@@ -27,12 +129,9 @@ async function send() {
 
   const data = await res.json();
 
-  document.getElementById("chat-box").innerHTML += `
-    <p><b>You:</b> ${message}</p>
-    <p><b>Mira:</b> ${data.reply}</p>
-  `;
+  chatBox.innerHTML += "<div><b>Mira:</b> " + data.reply + "</div>";
 
-  input.value = "";
+  chatBox.scrollTop = chatBox.scrollHeight;
 }
 </script>
 
