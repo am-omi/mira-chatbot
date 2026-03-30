@@ -1,179 +1,134 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <title>Mira Chat</title>
+<!-- Mira Chatbot made by A. M. Omi -->
+<div id="chat-button">💬</div>
 
-  <style>
-    body {
-      margin: 0;
-      font-family: Arial;
-    }
-
-    /* Floating Button */
-    #chat-btn {
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      width: 55px;
-      height: 55px;
-      background: black;
-      border-radius: 50%;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      color: white;
-      font-size: 22px;
-      cursor: pointer;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-      z-index: 999;
-    }
-
-    /* Chat Box (Desktop default) */
-    #chat-modal {
-      position: fixed;
-      bottom: 90px;
-      right: 20px;
-      width: 350px;
-      height: 450px;
-      background: white;
-      border-radius: 15px;
-      display: none;
-      flex-direction: column;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.3);
-      z-index: 1000;
-    }
-
-    /* Mobile Full Screen */
-    @media (max-width: 768px) {
-      #chat-modal {
-        width: 100%;
-        height: 85%;
-        bottom: 0;
-        right: 0;
-        border-radius: 20px 20px 0 0;
-      }
-    }
-
-    /* Header */
-    #chat-header {
-      background: black;
-      color: white;
-      padding: 12px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-radius: 15px 15px 0 0;
-      font-weight: bold;
-    }
-
-    #close {
-      cursor: pointer;
-      font-size: 18px;
-    }
-
-    /* Messages */
-    #chat-box {
-      flex: 1;
-      padding: 10px;
-      overflow-y: auto;
-      font-size: 14px;
-    }
-
-    .msg {
-      margin-bottom: 10px;
-      line-height: 1.4;
-    }
-
-    .user {
-      text-align: right;
-    }
-
-    .bot {
-      text-align: left;
-      color: #444;
-    }
-
-    /* Input */
-    #input-area {
-      display: flex;
-      border-top: 1px solid #ddd;
-    }
-
-    #input-area input {
-      flex: 1;
-      padding: 10px;
-      border: none;
-      outline: none;
-    }
-
-    #input-area button {
-      background: black;
-      color: white;
-      border: none;
-      padding: 10px 15px;
-      cursor: pointer;
-    }
-  </style>
-</head>
-
-<body>
-
-<!-- Floating Button -->
-<div id="chat-btn" onclick="openChat()">💬</div>
-
-<!-- Chat Box -->
-<div id="chat-modal">
-
+<!-- Chat Popup -->
+<div id="chat-popup">
   <div id="chat-header">
-    Live Chat · MOASS
-    <span id="close" onclick="closeChat()">✖</span>
+    <span>Live Chat • MOASS</span>
+    <span id="close-chat">✖</span>
   </div>
 
-  <div id="chat-box"></div>
-
-  <div id="input-area">
-    <input id="input" placeholder="Type your message..." />
-    <button onclick="send()">Send</button>
-  </div>
-
+  <iframe
+    src="https://www.chatbase.co/chatbot-iframe/r2Lmo6bE0vYlmVAP38-1p"
+    frameborder="0">
+  </iframe>
 </div>
 
+<style>
+/* Floating Bubble Button */
+#chat-button {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 55px;
+  height: 55px;
+  background: black;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  cursor: pointer;
+  z-index: 9999;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+  transition: all 0.3s ease;
+}
+
+#chat-button:hover {
+  transform: scale(1.1);
+}
+
+/* Chat Popup (Desktop default) */
+#chat-popup {
+  position: fixed;
+  bottom: 90px;
+  right: 20px;
+  width: 360px;
+  height: 520px;
+  background: white;
+  border-radius: 15px;
+  display: none;
+  flex-direction: column;
+  overflow: hidden;
+  z-index: 9999;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+  animation: slideUp 0.3s ease;
+}
+
+/* Header */
+#chat-header {
+  background: black;
+  color: white;
+  padding: 12px;
+  font-size: 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Close Button */
+#close-chat {
+  cursor: pointer;
+  color: white;
+  font-size: 16px;
+  font-weight: bold;
+}
+
+/* iframe */
+#chat-popup iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+/* 🔥 MOBILE FULL SCREEN MODE */
+@media (max-width: 768px) {
+  #chat-popup {
+    width: 100%;
+    height: 85%;
+    bottom: 0;
+    right: 0;
+    border-radius: 20px 20px 0 0;
+  }
+
+  #chat-button {
+    bottom: 80px; /* avoid navbar overlap */
+  }
+}
+
+/* Animation */
+@keyframes slideUp {
+  from {
+    transform: translateY(60px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+</style>
+
 <script>
-function openChat() {
-  document.getElementById("chat-modal").style.display = "flex";
-}
+const chatBtn = document.getElementById("chat-button");
+const chatPopup = document.getElementById("chat-popup");
+const closeChat = document.getElementById("close-chat");
 
-function closeChat() {
-  document.getElementById("chat-modal").style.display = "none";
-}
+// Toggle open
+chatBtn.onclick = () => {
+  chatPopup.style.display = "flex";
+};
 
-async function send() {
-  const input = document.getElementById("input");
-  const message = input.value;
+// Close
+closeChat.onclick = () => {
+  chatPopup.style.display = "none";
+};
 
-  if (!message) return;
-
-  const chatBox = document.getElementById("chat-box");
-
-  chatBox.innerHTML += `<div class="msg user"><b>You:</b> ${message}</div>`;
-
-  input.value = "";
-
-  const res = await fetch("/chat", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({ message })
-  });
-
-  const data = await res.json();
-
-  chatBox.innerHTML += `<div class="msg bot"><b>Mira:</b> ${data.reply}</div>`;
-
-  chatBox.scrollTop = chatBox.scrollHeight;
-}
+// Optional: click outside to close (premium feel)
+window.onclick = function(e) {
+  if (e.target === chatPopup) {
+    chatPopup.style.display = "none";
+  }
+};
 </script>
-
-</body>
-</html>
