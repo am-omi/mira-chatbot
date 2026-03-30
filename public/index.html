@@ -29,9 +29,14 @@
       cursor: pointer;
       z-index: 9999;
       box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+      transition: transform 0.2s;
     }
 
-    /* Chat Popup (Desktop) */
+    #chat-button:hover {
+      transform: scale(1.1);
+    }
+
+    /* Chat Popup */
     #chat-popup {
       position: fixed;
       bottom: 90px;
@@ -47,7 +52,7 @@
       box-shadow: 0 10px 30px rgba(0,0,0,0.3);
     }
 
-    /* Mobile Full Screen */
+    /* Mobile */
     @media (max-width: 768px) {
       #chat-popup {
         width: 100%;
@@ -55,6 +60,10 @@
         bottom: 0;
         right: 0;
         border-radius: 20px 20px 0 0;
+      }
+
+      #chat-button {
+        bottom: 80px;
       }
     }
 
@@ -74,7 +83,7 @@
       font-size: 16px;
     }
 
-    /* Chat Messages */
+    /* Messages */
     #chat-box {
       flex: 1;
       padding: 10px;
@@ -97,7 +106,7 @@
       color: #444;
     }
 
-    /* Input Area */
+    /* Input */
     #chat-input {
       display: flex;
       border-top: 1px solid #ddd;
@@ -122,14 +131,14 @@
 
 <body>
 
-<!-- Floating Chat Button -->
+<!-- Chat Button -->
 <div id="chat-button">💬</div>
 
 <!-- Chat Popup -->
 <div id="chat-popup">
 
   <div id="chat-header">
-    <span>Chat with Mira • MOASS</span>
+    <span>Live Chat • MOASS</span>
     <span id="close-chat">✖</span>
   </div>
 
@@ -149,20 +158,23 @@ const closeBtn = document.getElementById("close-chat");
 const input = document.getElementById("input");
 const chatBox = document.getElementById("chat-box");
 
-// Open chat
-chatBtn.onclick = () => {
-  chatPopup.style.display = "flex";
-};
+// Toggle chat (FIXED - single click)
+chatBtn.addEventListener("click", () => {
+  if (chatPopup.style.display === "flex") {
+    chatPopup.style.display = "none";
+  } else {
+    chatPopup.style.display = "flex";
+  }
+});
 
-// Close chat
+// Close button
 closeBtn.onclick = () => {
   chatPopup.style.display = "none";
 };
 
 // Send message
 async function sendMessage() {
-  const message = input.value;
-
+  const message = input.value.trim();
   if (!message) return;
 
   chatBox.innerHTML += `<div class="message user"><b>You:</b> ${message}</div>`;
@@ -183,7 +195,7 @@ async function sendMessage() {
     chatBox.scrollTop = chatBox.scrollHeight;
 
   } catch (err) {
-    chatBox.innerHTML += `<div class="message bot">Error connecting to server</div>`;
+    chatBox.innerHTML += `<div class="message bot">⚠️ Error connecting to server</div>`;
   }
 }
 
