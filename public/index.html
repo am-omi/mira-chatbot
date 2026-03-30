@@ -1,181 +1,120 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Mira • MOASS Chatbot</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Mira Chat Button -->
+<div id="mira-btn">💬</div>
 
-  <style>
-    body {
-      margin: 0;
-      font-family: "Segoe UI", sans-serif;
-      background: #ece5dd;
-    }
-
-    #chat-container {
-      display: flex;
-      flex-direction: column;
-      height: 100vh;
-    }
-
-    /* Header */
-    #chat-header {
-      background: #075e54;
-      color: white;
-      padding: 12px;
-      font-weight: bold;
-      font-size: 16px;
-    }
-
-    /* Chat Area */
-    #chat-box {
-      flex: 1;
-      padding: 10px;
-      overflow-y: auto;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    /* Message bubbles */
-    .message {
-      max-width: 75%;
-      padding: 10px;
-      border-radius: 10px;
-      font-size: 14px;
-      line-height: 1.4;
-      word-wrap: break-word;
-    }
-
-    .user {
-      align-self: flex-end;
-      background: #dcf8c6;
-      border-bottom-right-radius: 2px;
-    }
-
-    .bot {
-      align-self: flex-start;
-      background: white;
-      border-bottom-left-radius: 2px;
-    }
-
-    /* Input */
-    #chat-input {
-      display: flex;
-      background: #f0f0f0;
-      padding: 8px;
-    }
-
-    #chat-input input {
-      flex: 1;
-      padding: 10px;
-      border-radius: 20px;
-      border: none;
-      outline: none;
-    }
-
-    #chat-input button {
-      margin-left: 8px;
-      background: #075e54;
-      color: white;
-      border: none;
-      border-radius: 50%;
-      width: 40px;
-      height: 40px;
-      cursor: pointer;
-    }
-
-    /* Typing indicator */
-    .typing {
-      font-size: 12px;
-      color: gray;
-      padding-left: 5px;
-    }
-  </style>
-</head>
-
-<body>
-
-<div id="chat-container">
-
-  <div id="chat-header">
-    Mira • MOASS
+<!-- Popup -->
+<div id="mira-popup">
+  
+  <div id="mira-header">
+    <span>Mira • MOASS</span>
+    <span id="mira-close">✖</span>
   </div>
 
-  <div id="chat-box"></div>
-
-  <div id="chat-input">
-    <input id="input" placeholder="Type a message..." />
-    <button onclick="sendMessage()">➤</button>
-  </div>
+  <iframe src="https://mira-chatbot-nl9c.onrender.com"></iframe>
 
 </div>
 
+<style>
+/* Button */
+#mira-btn {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 55px;
+  height: 55px;
+  background: #25d366;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  cursor: pointer;
+  z-index: 999999;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+}
+
+/* Popup */
+#mira-popup {
+  position: fixed;
+  bottom: 90px;
+  right: 20px;
+  width: 360px;
+  height: 520px;
+  background: white;
+  border-radius: 15px;
+  display: none;
+  flex-direction: column;
+  overflow: hidden;
+  z-index: 999999;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+  animation: slideUp 0.25s ease;
+}
+
+/* Header */
+#mira-header {
+  background: #075e54;
+  color: white;
+  padding: 12px;
+  font-weight: bold;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Close button */
+#mira-close {
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: bold;
+}
+
+/* iframe */
+#mira-popup iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  #mira-popup {
+    width: 100%;
+    height: 90%;
+    right: 0;
+    bottom: 0;
+    border-radius: 20px 20px 0 0;
+  }
+
+  #mira-btn {
+    bottom: 80px;
+  }
+}
+
+/* Animation */
+@keyframes slideUp {
+  from {
+    transform: translateY(50px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+</style>
+
 <script>
-const input = document.getElementById("input");
-const chatBox = document.getElementById("chat-box");
+const btn = document.getElementById("mira-btn");
+const popup = document.getElementById("mira-popup");
+const closeBtn = document.getElementById("mira-close");
 
-// Add message
-function addMessage(text, type) {
-  const msg = document.createElement("div");
-  msg.className = "message " + type;
-  msg.innerText = text;
-  chatBox.appendChild(msg);
-  chatBox.scrollTop = chatBox.scrollHeight;
-}
+// Open popup
+btn.onclick = () => {
+  popup.style.display = "flex";
+};
 
-// Typing indicator
-function showTyping() {
-  const typing = document.createElement("div");
-  typing.id = "typing";
-  typing.className = "typing";
-  typing.innerText = "Mira is typing...";
-  chatBox.appendChild(typing);
-  chatBox.scrollTop = chatBox.scrollHeight;
-}
-
-function removeTyping() {
-  const typing = document.getElementById("typing");
-  if (typing) typing.remove();
-}
-
-// Send message
-async function sendMessage() {
-  const message = input.value.trim();
-  if (!message) return;
-
-  addMessage(message, "user");
-  input.value = "";
-
-  showTyping();
-
-  try {
-    const res = await fetch("/chat", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({ message })
-    });
-
-    const data = await res.json();
-
-    removeTyping();
-    addMessage(data.reply, "bot");
-
-  } catch (err) {
-    removeTyping();
-    addMessage("⚠️ Server error", "bot");
-  }
-}
-
-// Enter key
-input.addEventListener("keypress", function(e) {
-  if (e.key === "Enter") {
-    sendMessage();
-  }
-});
+// Close popup
+closeBtn.onclick = () => {
+  popup.style.display = "none";
+};
 </script>
-
-</body>
-</html>
