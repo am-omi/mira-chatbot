@@ -9,62 +9,14 @@
     body {
       margin: 0;
       font-family: Arial, sans-serif;
-      background: #f5f5f5;
-    }
-
-    /* Floating Button */
-    #chat-button {
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      width: 55px;
-      height: 55px;
-      background: black;
-      color: white;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 22px;
-      cursor: pointer;
-      z-index: 9999;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-      transition: transform 0.2s;
-    }
-
-    #chat-button:hover {
-      transform: scale(1.1);
-    }
-
-    /* Chat Popup */
-    #chat-popup {
-      position: fixed;
-      bottom: 90px;
-      right: 20px;
-      width: 360px;
-      height: 520px;
       background: white;
-      border-radius: 15px;
-      display: none;
-      flex-direction: column;
-      overflow: hidden;
-      z-index: 9999;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
     }
 
-    /* Mobile */
-    @media (max-width: 768px) {
-      #chat-popup {
-        width: 100%;
-        height: 85%;
-        bottom: 0;
-        right: 0;
-        border-radius: 20px 20px 0 0;
-      }
-
-      #chat-button {
-        bottom: 80px;
-      }
+    /* Full Chat Container */
+    #chat-container {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
     }
 
     /* Header */
@@ -72,15 +24,7 @@
       background: black;
       color: white;
       padding: 12px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
       font-weight: bold;
-    }
-
-    #close-chat {
-      cursor: pointer;
-      font-size: 16px;
     }
 
     /* Messages */
@@ -89,6 +33,7 @@
       padding: 10px;
       overflow-y: auto;
       font-size: 14px;
+      background: #f5f5f5;
     }
 
     .message {
@@ -131,15 +76,10 @@
 
 <body>
 
-<!-- Chat Button -->
-<div id="chat-button">💬</div>
-
-<!-- Chat Popup -->
-<div id="chat-popup">
+<div id="chat-container">
 
   <div id="chat-header">
-    <span>Chat with Mira • MOASS</span>
-    <span id="close-chat">✖</span>
+    Chat with Mira • MOASS
   </div>
 
   <div id="chat-box"></div>
@@ -152,25 +92,8 @@
 </div>
 
 <script>
-const chatBtn = document.getElementById("chat-button");
-const chatPopup = document.getElementById("chat-popup");
-const closeBtn = document.getElementById("close-chat");
 const input = document.getElementById("input");
 const chatBox = document.getElementById("chat-box");
-
-// Toggle chat (FIXED - single click)
-chatBtn.addEventListener("click", () => {
-  if (chatPopup.style.display === "flex") {
-    chatPopup.style.display = "none";
-  } else {
-    chatPopup.style.display = "flex";
-  }
-});
-
-// Close button
-closeBtn.onclick = () => {
-  chatPopup.style.display = "none";
-};
 
 // Send message
 async function sendMessage() {
