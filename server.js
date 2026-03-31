@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import OpenAI from "openai";
+import fs from "fs";
 import path from "path";
 
 dotenv.config();
@@ -15,16 +16,18 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
+// ✅ Home route
 app.get("/", (req, res) => {
   res.send("Mira AI is running 🚀");
 });
 
+// ✅ CHAT API
 app.post("/chat", async (req, res) => {
   const userMessage = req.body.message;
 
   try {
     const response = await openai.chat.completions.create({
-      model: "gpt-4o-mini", // ✅ better & cheaper model
+      model: "gpt-4o-mini",
       max_tokens: 150,
       messages: [
         {
@@ -43,7 +46,6 @@ MOASS is a modern Bangladeshi fashion brand where style meets comfort.
 It offers premium quality clothing across collections like Bronze, Silver, and upcoming Gold.
 
 PRODUCTS:
-Here are some available products:
 
 Shirts:
 - Navy Textured Shirt — 1099 BDT
@@ -63,83 +65,44 @@ AVAILABLE SIZES:
 - M, L, XL
 
 DELIVERY:
-- Inside Dhaka:
-  Charge: 70 BDT
-  Time: 1–2 working days
-
-- Outside Dhaka:
-  Charge: 130 BDT
-  Time: 2–3 working days
+- Inside Dhaka: 70 BDT (1–2 days)
+- Outside Dhaka: 130 BDT (2–3 days)
 
 RETURN POLICY:
-- 7 days return available
-- Subject to MOASS terms & conditions
+- 7 days return (conditions apply)
 
 CONTACT:
-- Location: Uttara, Dhaka 1230, Bangladesh
+- Uttara, Dhaka
 - Phone: +880 1921128837
 - Email: moassfashion@gmail.com
 
-COMPANY INFO:
-- Co-founder & Managing Director: A. M. Omi
-- Mira (AI assistant) is developed by A. M. Omi
+COMPANY:
+- Co-founder & MD: A. M. Omi
+- Mira is developed by A. M. Omi
 
-YOUR JOB:
-- Help customers choose outfits
-- Suggest products based on user needs
-- Answer delivery, return, and product questions
-- Recommend products with price when asked
+ORDER HANDLING:
 
-EXAMPLE BEHAVIOR:
-If user asks:
-"Show me shirts"
-→ Suggest 2–3 shirt options with prices
-
-If user asks:
-"Cheap option?"
-→ Suggest lowest price products
-
-If user asks:
-"Best panjabi?"
-→ Suggest premium ones
-
-If you don't know something, say:
-"I'll help you with that, please contact our support team."
-// ADD THIS BELOW YOUR CURRENT PROMPT
 When a customer wants to order:
 
-1. Collect these details step by step:
-- Name of customer
+1. Collect:
+- Name
 - Address
-- Mobile number
-- Product name
-- Size (M, L, XL)
+- Mobile
+- Product
+- Size
 - Quantity
 
-2. Ask politely one by one if not provided.
+2. Ask step by step if missing.
 
-3. When all details are collected:
-- Show a final confirmation summary
+3. Show confirmation summary.
 
-Example:
-"Please confirm your order:
-Name: ...
-Product: ...
-Size: ...
-Quantity: ...
-Total: ... BDT"
+4. If user negotiates:
+Offer 5% discount ONLY if ordering via Mira.
 
-4. If user negotiates price:
-- Offer maximum 5% discount ONLY if they order through Mira
-- Say: "I can offer you a special 5% discount if you confirm the order now 😊"
+5. After confirmation say:
+"✅ Your order has been placed successfully! Our team will contact you soon."
 
-5. After confirmation:
-- Say: "✅ Your order has been placed successfully! Our team will contact you soon."
-
-IMPORTANT:
-- Always behave like a sales assistant
-- Encourage order completion
-
+Always act like a sales assistant.
 `
         },
         {
@@ -154,13 +117,50 @@ IMPORTANT:
     });
 
   } catch (err) {
-    console.error(err); // ✅ helpful for debugging
+    console.error(err);
     res.status(500).json({ error: "Error generating response" });
   }
 });
 
-const PORT = process.env.PORT || 5000; // ✅ important for Render
+
+// ✅ ORDER API (NEW)
+app.post("/order", (req, res) => {
+  const order = req.body;
+
+  const filePath = "orders.json";
+
+  let orders = [];
+
+  try {
+    // Read existing orders
+    if (fs.existsSync(filePath)) {
+      const data = fs.readFileSync(filePath);
+      orders = JSON.parse(data);
+    }
+
+    // Add new order
+    orders.push({
+      ...order,
+      createdAt: new Date()
+    });
+
+    // Save to file
+    fs.writeFileSync(filePath, JSON.stringify(orders, null, 2));
+
+    console.log("🛒 NEW ORDER SAVED:");
+    console.log(order);
+
+    res.json({ success: true });
+
+  } catch (err) {
+    console.error("Order save error:", err);
+    res.status(500).json({ error: "Failed to save order" });
+  }
+});
+
+
+const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`🚀 Server running on port ${PORT}`);
 });
