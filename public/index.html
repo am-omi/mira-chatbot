@@ -120,7 +120,7 @@ body {
 
 <div id="chat">
 
-  <!-- SINGLE HEADER -->
+  <!-- Header -->
   <div id="header">
     Chat with Mira • MOASS
   </div>
@@ -153,6 +153,17 @@ body {
 const input = document.getElementById("input");
 const messages = document.getElementById("messages");
 
+// Store order info
+let orderData = {
+  name: "",
+  phone: "",
+  address: "",
+  product: "",
+  size: "",
+  quantity: ""
+};
+
+// Add message to UI
 function addMessage(text, type) {
   const div = document.createElement("div");
   div.className = type;
@@ -167,17 +178,41 @@ function addMessage(text, type) {
   messages.scrollTop = messages.scrollHeight;
 }
 
+// Extract order details (basic)
+function extractOrderInfo(msg) {
+  const lower = msg.toLowerCase();
+
+  if (lower.includes("name")) orderData.name = msg;
+  if (lower.includes("address")) orderData.address = msg;
+  if (lower.includes("mobile") || lower.includes("phone")) orderData.phone = msg;
+
+  if (lower.includes("shirt") || lower.includes("hoodie") || lower.includes("panjabi")) {
+    orderData.product = msg;
+  }
+
+  if (lower.includes("m") || lower.includes("l") || lower.includes("xl")) {
+    orderData.size = msg;
+  }
+
+  const qtyMatch = msg.match(/\d+/);
+  if (qtyMatch) orderData.quantity = qtyMatch[0];
+}
+
+// Quick buttons
 function quickMsg(text) {
   input.value = text;
   sendMessage();
 }
 
+// Send message
 async function sendMessage() {
   const msg = input.value.trim();
   if (!msg) return;
 
   addMessage(msg, "user");
   input.value = "";
+
+  extractOrderInfo(msg);
 
   try {
     const res = await fetch("/chat", {
@@ -189,11 +224,26 @@ async function sendMessage() {
     const data = await res.json();
     addMessage(data.reply, "bot");
 
+    // ✅ Detect order confirmation
+    if (data.reply.toLowerCase().includes("order has been placed")) {
+
+      await fetch("/order", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(orderData)
+      });
+
+      console.log("Order sent:", orderData);
+    }
+
   } catch {
     addMessage("⚠️ Server error", "bot");
   }
 }
 
+// Enter key
 input.addEventListener("keypress", e => {
   if (e.key === "Enter") sendMessage();
 });
