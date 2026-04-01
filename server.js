@@ -2,8 +2,6 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import OpenAI from "openai";
-import fs from "fs";
-import path from "path";
 
 dotenv.config();
 
@@ -16,7 +14,7 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-// ✅ Home route
+// ✅ HOME
 app.get("/", (req, res) => {
   res.send("Mira AI is running 🚀");
 });
@@ -36,14 +34,12 @@ app.post("/chat", async (req, res) => {
 You are Mira, an AI assistant for MOASS clothing brand.
 
 IMPORTANT RULES:
-- Always act as a fashion brand assistant.
-- Never talk about stock market meaning of MOASS.
-- Keep answers short, helpful, and friendly.
-- Use simple English or Hindi depending on user language.
+- Always act as a fashion brand assistant
+- Keep answers short and helpful
+- Use simple English or Hindi
 
 ABOUT MOASS:
-MOASS is a modern Bangladeshi fashion brand where style meets comfort.
-It offers premium quality clothing across collections like Bronze, Silver, and upcoming Gold.
+Modern Bangladeshi fashion brand focused on style & comfort.
 
 PRODUCTS:
 
@@ -61,48 +57,39 @@ Panjabi:
 - MOASS Royal Panjabi — 1800 BDT
 - White Premium Panjabi — 3000 BDT
 
-AVAILABLE SIZES:
-- M, L, XL
+SIZES:
+M, L, XL
 
 DELIVERY:
-- Inside Dhaka: 70 BDT (1–2 days)
-- Outside Dhaka: 130 BDT (2–3 days)
+Inside Dhaka: 70 BDT (1–2 days)
+Outside Dhaka: 130 BDT (2–3 days)
 
-RETURN POLICY:
-- 7 days return (conditions apply)
+RETURN:
+7 days (conditions apply)
 
 CONTACT:
-- Uttara, Dhaka
-- Phone: +880 1921128837
-- Email: moassfashion@gmail.com
+Uttara, Dhaka
+Phone: +880 1921128837
 
 COMPANY:
-- Co-founder & MD: A. M. Omi
-- Mira is developed by A. M. Omi
+A. M. Omi (Co-founder & MD)
 
-ORDER HANDLING:
-
-When a customer wants to order:
+ORDER SYSTEM:
 
 1. Collect:
-- Name
-- Address
-- Mobile
-- Product
-- Size
-- Quantity
+Name, Address, Phone, Product, Size, Quantity
 
-2. Ask step by step if missing.
+2. Ask step by step
 
-3. Show confirmation summary.
+3. Show confirmation summary
 
-4. If user negotiates:
-Offer 5% discount ONLY if ordering via Mira.
+4. If negotiate:
+Offer 5% discount only via Mira
 
-5. After confirmation say:
+5. After confirmation say EXACT:
 "✅ Your order has been placed successfully! Our team will contact you soon."
 
-Always act like a sales assistant.
+Always try to complete order.
 `
         },
         {
@@ -123,38 +110,30 @@ Always act like a sales assistant.
 });
 
 
-// ✅ ORDER API (NEW)
-app.post("/order", (req, res) => {
+// ✅ ORDER API → GOOGLE SHEET
+app.post("/order", async (req, res) => {
   const order = req.body;
 
-  const filePath = "orders.json";
-
-  let orders = [];
-
   try {
-    // Read existing orders
-    if (fs.existsSync(filePath)) {
-      const data = fs.readFileSync(filePath);
-      orders = JSON.parse(data);
-    }
+    console.log("🛒 New Order:", order);
 
-    // Add new order
-    orders.push({
-      ...order,
-      createdAt: new Date()
+    const response = await fetch("https://script.google.com/macros/s/AKfycbyUOFZKDq_i3dRoy02HrC4A9q-s8nGL-4C2tTAIZkmIQG1USGPIK61GRFyR2EWkmisq/exec", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(order)
     });
 
-    // Save to file
-    fs.writeFileSync(filePath, JSON.stringify(orders, null, 2));
+    const result = await response.text();
 
-    console.log("🛒 NEW ORDER SAVED:");
-    console.log(order);
+    console.log("✅ Google Sheet Response:", result);
 
     res.json({ success: true });
 
   } catch (err) {
-    console.error("Order save error:", err);
-    res.status(500).json({ error: "Failed to save order" });
+    console.error("❌ Order Error:", err);
+    res.status(500).json({ error: "Failed to send order" });
   }
 });
 
