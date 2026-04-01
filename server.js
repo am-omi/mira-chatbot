@@ -14,87 +14,120 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
+// 🧠 Simple memory
+const orders = {};
+
 // ✅ HOME
 app.get("/", (req, res) => {
   res.send("Mira AI is running 🚀");
 });
 
-// ✅ CHAT API
+
+// ✅ CHAT API (NO LOOP + AUTO ORDER)
 app.post("/chat", async (req, res) => {
-  const userMessage = req.body.message;
+  const { message, userId = "user1" } = req.body;
 
   try {
+    if (!orders[userId]) {
+      orders[userId] = {
+        name: "",
+        address: "",
+        phone: "",
+        product: "",
+        size: "",
+        quantity: ""
+      };
+    }
+
+    const order = orders[userId];
+    const msg = message.toLowerCase();
+
+    // 🧠 Extract data automatically
+    if (!order.phone && (msg.includes("01") || msg.match(/\d{10,}/))) {
+      order.phone = message;
+    }
+
+    if (!order.name && msg.includes("name")) {
+      order.name = message;
+    }
+
+    if (!order.address && msg.includes("address")) {
+      order.address = message;
+    }
+
+    if (!order.product && (msg.includes("shirt") || msg.includes("hoodie") || msg.includes("panjabi"))) {
+      order.product = message;
+    }
+
+    if (!order.size && (msg.includes("m") || msg.includes("l") || msg.includes("xl"))) {
+      order.size = message;
+    }
+
+    const qty = message.match(/\d+/);
+    if (!order.quantity && qty) {
+      order.quantity = qty[0];
+    }
+
+    // ✅ CHECK COMPLETE ORDER
+    const isComplete =
+      order.name &&
+      order.address &&
+      order.phone &&
+      order.product &&
+      order.size &&
+      order.quantity;
+
+    // 🚀 AUTO CONFIRM (NO LOOP)
+    if (isComplete) {
+      await fetch("https://script.google.com/macros/s/AKfycbyUOFZKDq_i3dRoy02HrC4A9q-s8nGL-4C2tTAIZkmIQG1USGPIK61GRFyR2EWkmisq/exec", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(order)
+      });
+
+      // reset for next order
+      orders[userId] = {};
+
+      return res.json({
+        reply: `✅ Your order has been placed successfully!
+
+Details:
+Name: ${order.name}
+Product: ${order.product}
+Size: ${order.size}
+Quantity: ${order.quantity}
+
+Our team will contact you soon.`
+      });
+    }
+
+    // 🤖 NORMAL AI RESPONSE (ONLY WHEN NOT COMPLETE)
     const response = await openai.chat.completions.create({
       model: "gpt-4o-mini",
-      max_tokens: 150,
+      max_tokens: 120,
       messages: [
         {
           role: "system",
           content: `
-You are Mira, an AI assistant for MOASS clothing brand.
+You are Mira, assistant of MOASS clothing brand.
 
-IMPORTANT RULES:
-- Always act as a fashion brand assistant
-- Keep answers short and helpful
-- Use simple English or Hindi
+Rules:
+- Do NOT repeat questions
+- Ask only missing info
+- Keep it short
 
-ABOUT MOASS:
-Modern Bangladeshi fashion brand focused on style & comfort.
-
-PRODUCTS:
-
-Shirts:
-- Navy Textured Shirt — 1099 BDT
-- Sage Bloom Premium Shirt — 1099 BDT
-- Skyline Old Money Shirt — 1199 BDT
-
-Hoodies:
-- Olive Green Woolen Hoodie — 1050 BDT
-- Black Filipps Cotton Hoodie — 1050 BDT
-- White Filipps Cotton Hoodie — 1050 BDT
-
-Panjabi:
-- MOASS Royal Panjabi — 1800 BDT
-- White Premium Panjabi — 3000 BDT
-
-SIZES:
-M, L, XL
-
-DELIVERY:
-Inside Dhaka: 70 BDT (1–2 days)
-Outside Dhaka: 130 BDT (2–3 days)
-
-RETURN:
-7 days (conditions apply)
-
-CONTACT:
-Uttara, Dhaka
-Phone: +880 1921128837
-
-COMPANY:
-A. M. Omi (Co-founder & MD)
-
-ORDER SYSTEM:
-
-1. Collect:
+Ask for:
 Name, Address, Phone, Product, Size, Quantity
 
-2. Ask step by step
-
-3. Show confirmation summary
-
-4. If negotiate:
-Offer 5% discount only via Mira
-
-5. After confirmation say EXACT:
-"✅ Your order has been placed successfully! Our team will contact you soon."
-
-Always try to complete order.
+Example:
+"Please tell me your size (M/L/XL)"
 `
         },
         {
           role: "user",
-          content: userMessage
+          content: message
         }
       ]
     });
@@ -105,35 +138,7 @@ Always try to complete order.
 
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: "Error generating response" });
-  }
-});
-
-
-// ✅ ORDER API → GOOGLE SHEET
-app.post("/order", async (req, res) => {
-  const order = req.body;
-
-  try {
-    console.log("🛒 New Order:", order);
-
-    const response = await fetch("https://script.google.com/macros/s/AKfycbyUOFZKDq_i3dRoy02HrC4A9q-s8nGL-4C2tTAIZkmIQG1USGPIK61GRFyR2EWkmisq/exec", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(order)
-    });
-
-    const result = await response.text();
-
-    console.log("✅ Google Sheet Response:", result);
-
-    res.json({ success: true });
-
-  } catch (err) {
-    console.error("❌ Order Error:", err);
-    res.status(500).json({ error: "Failed to send order" });
+    res.status(500).json({ error: "Error" });
   }
 });
 
