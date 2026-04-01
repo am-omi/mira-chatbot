@@ -153,7 +153,7 @@ body {
 const input = document.getElementById("input");
 const messages = document.getElementById("messages");
 
-// Store order info
+// Store order info (kept as is, not used heavily now)
 let orderData = {
   name: "",
   phone: "",
@@ -163,7 +163,7 @@ let orderData = {
   quantity: ""
 };
 
-// Add message to UI
+// Add message
 function addMessage(text, type) {
   const div = document.createElement("div");
   div.className = type;
@@ -178,7 +178,7 @@ function addMessage(text, type) {
   messages.scrollTop = messages.scrollHeight;
 }
 
-// Extract order details (basic)
+// Extract order info (kept, harmless)
 function extractOrderInfo(msg) {
   const lower = msg.toLowerCase();
 
@@ -204,7 +204,7 @@ function quickMsg(text) {
   sendMessage();
 }
 
-// Send message
+// ✅ Send message (UPDATED)
 async function sendMessage() {
   const msg = input.value.trim();
   if (!msg) return;
@@ -218,25 +218,14 @@ async function sendMessage() {
     const res = await fetch("/chat", {
       method: "POST",
       headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({ message: msg })
+      body: JSON.stringify({
+        message: msg,
+        userId: "user1"   // ✅ IMPORTANT FIX
+      })
     });
 
     const data = await res.json();
     addMessage(data.reply, "bot");
-
-    // ✅ Detect order confirmation
-    if (data.reply.toLowerCase().includes("order has been placed")) {
-
-      await fetch("/order", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(orderData)
-      });
-
-      console.log("Order sent:", orderData);
-    }
 
   } catch {
     addMessage("⚠️ Server error", "bot");
