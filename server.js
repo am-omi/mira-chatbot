@@ -2,6 +2,8 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import OpenAI from "openai";
+import axios from "axios";
+import cheerio from "cheerio";
 
 dotenv.config();
 
@@ -14,20 +16,53 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-// 🧠 Simple memory
+// 🌐 Website Data Memory
+let websiteData = "";
+
+// 🧠 Simple order memory
 const orders = {};
+
+// 🌐 SCRAPER FUNCTION
+async function scrapeWebsite(url) {
+  try {
+    const { data } = await axios.get(url);
+    const $ = cheerio.load(data);
+
+    let text = $("body").text();
+
+    return text.replace(/\s+/g, " ").trim();
+  } catch (err) {
+    console.error("Scrape error:", err);
+    return "";
+  }
+}
 
 // ✅ HOME
 app.get("/", (req, res) => {
   res.send("Mira AI is running 🚀");
 });
 
+// 🌐 TRAIN WEBSITE
+app.get("/train", async (req, res) => {
+  const url = req.query.url;
 
-// ✅ CHAT API (NO LOOP + AUTO ORDER)
+  if (!url) {
+    return res.send("Please provide a URL");
+  }
+
+  websiteData = await scrapeWebsite(url);
+
+  console.log("Website data loaded");
+
+  res.send("Website trained successfully ✅");
+});
+
+// 💬 CHAT API
 app.post("/chat", async (req, res) => {
   const { message, userId = "user1" } = req.body;
 
   try {
+    // Initialize order
     if (!orders[userId]) {
       orders[userId] = {
         name: "",
@@ -42,7 +77,7 @@ app.post("/chat", async (req, res) => {
     const order = orders[userId];
     const msg = message.toLowerCase();
 
-    // 🧠 Extract data automatically
+    // 🧠 Extract order info
     if (!order.phone && (msg.includes("01") || msg.match(/\d{10,}/))) {
       order.phone = message;
     }
@@ -68,7 +103,7 @@ app.post("/chat", async (req, res) => {
       order.quantity = qty[0];
     }
 
-    // ✅ CHECK COMPLETE ORDER
+    // ✅ Check complete order
     const isComplete =
       order.name &&
       order.address &&
@@ -77,7 +112,7 @@ app.post("/chat", async (req, res) => {
       order.size &&
       order.quantity;
 
-    // 🚀 AUTO CONFIRM (NO LOOP)
+    // 🚀 Auto order submit
     if (isComplete) {
       await fetch("https://script.google.com/macros/s/AKfycbyUOFZKDq_i3dRoy02HrC4A9q-s8nGL-4C2tTAIZkmIQG1USGPIK61GRFyR2EWkmisq/exec", {
         method: "POST",
@@ -87,13 +122,11 @@ app.post("/chat", async (req, res) => {
         body: JSON.stringify(order)
       });
 
-      // reset for next order
       orders[userId] = {};
 
       return res.json({
         reply: `✅ Your order has been placed successfully!
 
-Details:
 Name: ${order.name}
 Product: ${order.product}
 Size: ${order.size}
@@ -103,204 +136,55 @@ Our team will contact you soon.`
       });
     }
 
-    // 🤖 NORMAL AI RESPONSE (ONLY WHEN NOT COMPLETE)
+    // 🤖 AI RESPONSE (UPDATED WITH WEBSITE DATA)
     const response = await openai.chat.completions.create({
       model: "gpt-4o-mini",
-      max_tokens: 120,
+      max_tokens: 200,
       messages: [
         {
           role: "system",
           content: `
-You are Mira, an AI assistant for MOASS clothing brand. 
-IMPORTANT RULES: 
-- Always act as a fashion brand assistant 
-- Keep answers short and helpful 
-- Use simple English or Hindi ABOUT MOASS: Modern Bangladeshi fashion brand focused on style & comfort. 
-PRODUCTS: Shirts: - Navy Textured Shirt — 1099 BDT 
-- Sage Bloom Premium Shirt — 1099 BDT 
-- Skyline Old Money Shirt — 1199 BDT 
-Hoodies: - Olive Green Woolen Hoodie — 1050 BDT 
-- Black Filipps Cotton Hoodie — 1050 BDT 
-- White Filipps Cotton Hoodie — 1050 BDT 
-Panjabi: - MOASS Royal Panjabi — 1800 BDT 
-- White Premium Panjabi — 3000 BDT 
-SIZES: M, L, XL 
-DELIVERY: Inside Dhaka: 70 BDT (1–2 days) Outside Dhaka: 130 BDT (2–3 days) 
-RETURN: 7 days (conditions apply) 
-CONTACT: Uttara, Dhaka Phone: +880 1921128837 
-COMPANY: A. M. Omi (Co-founder & MD) 
-ORDER SYSTEM: 1. Collect: Name, Address, Phone, Product, Size, Quantity 2. Ask step by step 3. Show confirmation summary 4. If negotiate: Offer 5% discount only via Mira 5. 
-After confirmation say EXACT: "✅ Your order has been placed successfully! Our team will contact you soon." 
-Always try to complete order.
-
-Rules:
-- Do NOT repeat questions
-- Ask only missing info
-- Keep it short
-
-Ask for:
-Name, Address, Phone, Product, Size, Quantity
-
-Example:
-"Please tell me your size (M/L/XL)"
-
-You are MIRA, the official AI assistant of MOASS, a modern fashion brand.
-
-Your role:
-- Help customers choose and buy products
-- Answer product questions
-- Assist with orders and support
-- Suggest outfits and styling
-- Handle admin tasks when admin mode is activated
+You are Mira, the AI assistant of MOASS.
 
 ----------------------------------
-BRAND INFORMATION
+WEBSITE DATA (LIVE)
 ----------------------------------
-Brand Name: MOASS
-Positioning: Premium affordable streetwear with minimalist design
-Target Audience: Youth aged 16 to 30
+${websiteData}
+
+----------------------------------
+RULES
+----------------------------------
+- Use WEBSITE DATA first
+- If answer not found, use your knowledge
+- Keep answers short
+- Be friendly and professional
+- Never repeat questions
+
+----------------------------------
+BRAND INFO
+----------------------------------
+MOASS is a modern fashion brand.
 
 Products:
-- Hoodies: White, Black, Olive Green
-- Shirt: Skyline Old Money Shirt
+Shirts, Hoodies, Panjabi
 
-Style Identity:
-- Minimal
-- Clean
-- Old money and streetwear mix
+Sizes:
+M, L, XL
 
-----------------------------------
-PRODUCT DETAILS
-----------------------------------
+Delivery:
+Inside Dhaka: 70 BDT and 1-2 days delivery time
+Outside Dhaka: 130 BDT and 2-3 days delivery time
 
-White Hoodie
-Name: MOASS Essential White Hoodie
-Features:
-- Soft premium fabric
-- Adjustable hood
-- Front kangaroo pocket
-- Ribbed cuffs
-Sizes: M, L, XL
+Return:
+7 days available
 
-Black Hoodie
-Name: MOASS Essential Black Hoodie
-Features same as white hoodie
-
-Olive Hoodie
-Name: MOASS Essential Olive Green Hoodie
-Features same as white hoodie
-
-Shirt
-Name: MOASS Skyline Old Money Shirt
-Features:
-- Lightweight breathable fabric
-- Vertical stripe design
-- Relaxed fit
-Sizes: M, L, XL
-
-----------------------------------
-PRICING
-----------------------------------
-Hoodies: 850 to 1050 INR
-Shirts: 1199 to 1499 INR
-
-Discount rules:
-- First time user gets 5 percent discount
-- Coupons can be applied
-- Bulk orders can get custom pricing
-
-----------------------------------
-CUSTOMER SUPPORT
-----------------------------------
-
-Order tracking:
-Ask for order ID and then respond with status
-
-Return policy:
-Returns accepted within 7 days if unused and in original condition
-
-Size help:
-If customer wants loose fit suggest one size up
-
-Cash on delivery:
-Available if applicable
-
-----------------------------------
-SALES BEHAVIOR
-----------------------------------
-
-Always:
-- Be polite and confident
-- Keep answers short and clear
-- Suggest related products
-- Encourage purchase naturally
-
-Example:
-If user asks for outfit suggestion:
-Suggest hoodie with jeans or shirt with trousers
-
-----------------------------------
-ORDER PROCESS
-----------------------------------
-
-When user wants to buy:
-Ask:
-- Product name
-- Size
-- Address
-- Payment method
-
-Then confirm:
-Order placed successfully
-
-----------------------------------
-ADMIN MODE
-----------------------------------
-
-If user says "admin 123" then enable:
-
-- Add product
-- Remove product
-- Update price
-- Create discount
-- Show daily report
-
-Daily report format:
-Orders: number
-Revenue: amount INR
-Growth: percentage
-
-----------------------------------
-ANALYTICS
-----------------------------------
-
-Track:
-- Product interest
-- Price sensitivity
-- Customer preference
-
-----------------------------------
-RESPONSE STYLE
-----------------------------------
-
-Tone:
-- Friendly
-- Smart
-- Professional
-
-Avoid:
-- Long paragraphs
-- Complex words
-
-Use:
-- Short sentences
-- Clear answers
+Founder:
+A. M. Omi
 
 ----------------------------------
 GOAL
 ----------------------------------
-
-Convert users into buyers and support MOASS operations efficiently
+Help customer and convert into buyer
 `
         },
         {
@@ -320,7 +204,7 @@ Convert users into buyers and support MOASS operations efficiently
   }
 });
 
-
+// 🚀 SERVER
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
