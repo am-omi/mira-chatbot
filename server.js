@@ -27,9 +27,31 @@ async function scrapeWebsite(url) {
     const { data } = await axios.get(url);
     const $ = cheerio.load(data);
 
-    let text = $("body").text();
+   let products = [];
 
-    return text.replace(/\s+/g, " ").trim();
+// Extract from images (many ecommerce sites use alt text)
+  $("img").each((i, el) => {
+    const alt = $(el).attr("alt");
+  
+    if (alt && alt.toLowerCase().includes("shirt")) {
+      products.push(alt);
+    }
+  });
+  
+  // Extract from headings
+  $("h1, h2, h3").each((i, el) => {
+    const text = $(el).text().trim();
+    if (text.toLowerCase().includes("shirt")) {
+      products.push(text);
+  }
+});
+
+// fallback if nothing found
+if (products.length === 0) {
+  products.push("Products available on website");
+}
+
+return products.join(" | ");
   } catch (err) {
     console.error("Scrape error:", err);
     return "";
